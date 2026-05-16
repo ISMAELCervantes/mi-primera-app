@@ -1,0 +1,35 @@
+name: CI - Validación de Código
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  validacion:
+    name: Instalar, Lint y TypeCheck
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: TypeCheck
+        run: npx tsc --noEmit
+
+      - name: Lint
+        run: npm run lint
