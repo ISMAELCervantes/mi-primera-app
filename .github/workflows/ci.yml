@@ -3,33 +3,59 @@ name: CI - Validación de Código
 on:
   push:
     branches:
-      - main
-      - develop
+      - main        # Se ejecuta cuando haces push directo a main
+      - develop     # Se ejecuta cuando haces push directo a develop
   pull_request:
     branches:
-      - main
-      - develop
+      - main        # Se ejecuta cuando abres un PR hacia main
+      - develop     # Se ejecuta cuando abres un PR hacia develop
 
+# JOBS - Conjunto de tareas que se ejecutan en el pipeline
 jobs:
   validacion:
-    name: Instalar, Lint y TypeCheck
-    runs-on: ubuntu-latest
+    name: Instalar, Lint y TypeCheck  # Nombre visible en GitHub Actions
+    runs-on: ubuntu-latest            # Máquina virtual Linux gratuita de GitHub
 
+    # STEPS - Pasos secuenciales dentro del job
     steps:
+
+      # STEP 1 ─────────────────────────────────────────────
+      # Clona tu repositorio dentro de la máquina virtual
+      # Sin este paso, el runner no tiene acceso a tu código
       - name: Checkout del código
         uses: actions/checkout@v4
 
+      # STEP 2 ─────────────────────────────────────────────
+      # Instala y configura Node.js en el runner
+      # node-version: 24 → coincide con tu versión local
+      # cache: 'npm' → guarda node_modules en caché para
+      #               que builds futuros sean más rápidos
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: 'npm'
 
+      # STEP 3 ─────────────────────────────────────────────
+      # Instala todas las dependencias del proyecto
+      # "npm ci" es más estricto que "npm install":
+      #   - Usa exactamente package-lock.json
+      #   - Borra node_modules antes de instalar
+      #   - Garantiza instalación limpia y reproducible
       - name: Instalar dependencias
         run: npm ci
 
+      # STEP 4 ─────────────────────────────────────────────
+      # Verifica que no haya errores de tipos en TypeScript
+      # "--noEmit" solo revisa, NO genera archivos .js
+      # Si hay un tipo incorrecto, el pipeline falla aquí
       - name: TypeCheck
         run: npx tsc --noEmit
 
+      # STEP 5 ─────────────────────────────────────────────
+      # Ejecuta ESLint sobre todo el proyecto
+      # Usa el script "lint": "expo lint" de tu package.json
+      # Detecta errores de estilo, código sucio o malas
+      # prácticas antes de que lleguen a main
       - name: Lint
         run: npm run lint
